@@ -1,0 +1,157 @@
+/* Tokens do Figma (The Chat - Portfólio) */
+:root {
+  --brand: #ee9591;
+  --brand-strong: #ee7c83;
+  --brand-soft: #ffc4d8;
+  --brand-gradient: linear-gradient(124deg, #f9a8a5 35%, #e28a86 80%);
+  --title: #555555;
+  --ink: #252525;
+  --ink-strong: #363636;
+  --muted: #8a8a8a;
+  --line: #f6f6f6;
+  --border: #ececec;
+  --bg: #ffffff;
+  --surface: #fbf7f7;
+  --danger: #d64545;
+  --shadow: -10px 10px 30px rgba(0, 0, 0, 0.12);
+  --radius: 15px;
+  --font: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-logo: "Bungee Shade", var(--font);
+  --font-number: "Roboto", var(--font);
+  /* 1px do Figma (frame 1920) escalado pela largura da tela */
+  --u: min(1px, calc(100vw / 1920));
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--brand-strong);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* botões */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.75rem 1.75rem;
+  border: 3px solid var(--brand);
+  background: transparent;
+  color: var(--brand);
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.btn:hover {
+  background: var(--brand);
+  color: #fff;
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-solid {
+  background: var(--brand);
+  color: #fff;
+}
+.btn-solid:hover {
+  background: var(--brand-strong);
+  border-color: var(--brand-strong);
+}
+.btn-ghost {
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-ghost:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* campos */
+.field {
+  display: grid;
+  gap: 0.4rem;
+  text-align: left;
+}
+.field label {
+  font-size: 0.9rem;
+  color: var(--title);
+}
+.input {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input:focus {
+  border-color: var(--brand);
+}
+.error {
+  color: var(--danger);
+  font-size: 0.9rem;
+  margin: 0;
+}
