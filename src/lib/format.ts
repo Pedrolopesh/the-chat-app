@@ -24,3 +24,21 @@ export function initials(name: string): string {
       .join("") || "?"
   );
 }
+
+/** Hora do carimbo legado ("DD/MM/YYYY-HH:mm" → "HH:mm"). */
+export function timeOf(stamp?: string): string {
+  return stamp?.split("-")[1] ?? "";
+}
+
+/** Rótulo do dia para separar as mensagens: "Hoje", "Ontem" ou a data. */
+export function dayLabel(stamp?: string, today = new Date()): string {
+  const date = stamp?.split("-")[0];
+  if (!date) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  const fmt = (d: Date) => `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`;
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (date === fmt(today)) return "Hoje";
+  if (date === fmt(yesterday)) return "Ontem";
+  return date;
+}

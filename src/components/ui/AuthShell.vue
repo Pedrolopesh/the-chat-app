@@ -37,6 +37,7 @@ import AppLogo from "./AppLogo.vue";
   background: #fff;
   box-shadow: -12px -12px 0 0 var(--brand);
   text-align: center;
+  animation: rise-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .card :deep(h1) {
   margin: 0 0 8px;

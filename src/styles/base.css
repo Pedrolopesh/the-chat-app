@@ -4,6 +4,11 @@
   --brand-strong: #ee7c83;
   --brand-soft: #ffc4d8;
   --brand-gradient: linear-gradient(124deg, #f9a8a5 35%, #e28a86 80%);
+  --purple: #392054;
+  --purple-2: #4a2b6b;
+  --lilac: #eadcff;
+  --cyan: #31dae7;
+  --online: #3cc47c;
   --title: #555555;
   --ink: #252525;
   --ink-strong: #363636;
@@ -154,4 +159,76 @@ a {
   color: var(--danger);
   font-size: 0.9rem;
   margin: 0;
+}
+
+/* botões em pílula da landing */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--brand);
+  color: var(--brand-strong);
+  border-radius: 999px;
+  padding: 8px 20px;
+  text-decoration: none;
+  background: transparent;
+  transition: background 0.25s, color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pill:hover {
+  background: var(--brand);
+  color: #fff;
+}
+.pill.solid {
+  background: var(--brand-gradient);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(238, 124, 131, 0.35);
+}
+.pill.solid:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(238, 124, 131, 0.45);
+}
+.pill.big {
+  font-size: 1.15rem;
+  padding: 15px 44px;
+  border-width: 3px;
+}
+
+/* movimento: toque, entrada de página e revelação ao rolar */
+:where(.btn, .pill, button, .conv):active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
 }

@@ -62,7 +62,35 @@ onMounted(async () => {
   border-radius: var(--radius);
 }
 .dialog::backdrop {
-  background: rgba(37, 37, 37, 0.35);
+  background: rgba(57, 32, 84, 0.35);
+  backdrop-filter: blur(3px);
+  animation: fade 0.25s ease both;
+}
+.dialog[open] {
+  animation: dialog-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+.list li {
+  animation: rise-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.list li:nth-child(2) {
+  animation-delay: 30ms;
+}
+.list li:nth-child(3) {
+  animation-delay: 60ms;
+}
+.list li:nth-child(n + 4) {
+  animation-delay: 90ms;
 }
 .inner {
   display: grid;
@@ -106,6 +134,7 @@ h2 {
   background: none;
   cursor: pointer;
   text-align: left;
+  transition: background 0.2s, transform 0.2s;
 }
 .list button:hover {
   background: var(--surface);
