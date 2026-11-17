@@ -18,6 +18,15 @@ export function joinChat(chatId: string): Promise<boolean> {
   return new Promise((resolve) => getSocket().emit("join", chatId, (ok: boolean) => resolve(ok)));
 }
 
+/** Emite evento de digitação para a sala do chat */
+export function emitTypingStart(chatId: string) {
+  getSocket().emit("typing:start", chatId);
+}
+
+export function emitTypingStop(chatId: string) {
+  getSocket().emit("typing:stop", chatId);
+}
+
 export function closeSocket() {
   socket?.disconnect();
   socket = null;

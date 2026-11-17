@@ -2,10 +2,12 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import NewChatDialog from "@/components/chat/NewChatDialog.vue";
+import TypingIndicator from "@/components/chat/TypingIndicator.vue";
 import AppLogo from "@/components/ui/AppLogo.vue";
 import UserAvatar from "@/components/ui/UserAvatar.vue";
 import mark from "@/assets/landing/logo-mark.svg";
 import { dayLabel, shortStamp, timeOf } from "@/lib/format";
+import { emitTypingStart, emitTypingStop, getSocket } from "@/lib/socket";
 import { useChats } from "@/stores/chats";
 import { useSession } from "@/stores/session";
 
@@ -21,14 +23,59 @@ const showNew = ref(false);
 const scroller = ref<HTMLElement | null>(null);
 const routeId = computed(() => (typeof route.params.id === "string" ? route.params.id : ""));
 
+// Typing indicator state: tracks who is currently typing in the active chat
+const typingUsers = ref<Map<string, { name: string; isAgent: boolean }>>(new Map());
+let typingTimeout: ReturnType<typeof setTimeout> | null = null;
+const CLAUDE_PEDRO_ID = "6afbb43ca5f3b29532e64087";
+
 async function scrollToEnd() {
   await nextTick();
   scroller.value?.scrollTo({ top: scroller.value.scrollHeight });
 }
 
+// Typing indicator: listen for remote typing events and emit local ones
+function setupTypingListeners() {
+  const socket = getSocket();
+  socket.on("typing:start", (ev: { chat_id: string; user_id: string }) => {
+    if (ev.chat_id !== routeId.value) return;
+    const conv = store.conversations.find((c) => c.chat._id === ev.chat_id);
+    if (!conv || ev.user_id === session.userId) return;
+    typingUsers.value.set(ev.user_id, {
+      name: conv.other.name,
+      isAgent: ev.user_id === CLAUDE_PEDRO_ID,
+    });
+    void scrollToEnd();
+  });
+  socket.on("typing:stop", (ev: { chat_id: string; user_id: string }) => {
+    if (ev.chat_id !== routeId.value) return;
+    typingUsers.value.delete(ev.user_id);
+  });
+}
+
+function onDraftInput() {
+  const chatId = routeId.value;
+  if (!chatId || !draft.value.trim()) return;
+  emitTypingStart(chatId);
+  if (typingTimeout) clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    emitTypingStop(chatId);
+    typingTimeout = null;
+  }, 2000);
+}
+
+// Clear typing state when switching chats
+watch(routeId, () => {
+  typingUsers.value.clear();
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+    typingTimeout = null;
+  }
+});
+
 onMounted(async () => {
   if (!session.me) await session.loadMe().catch(() => null);
   await store.load();
+  setupTypingListeners();
 });
 
 watch(
@@ -194,11 +241,17 @@ const timeline = computed(() => {
               <time>{{ timeOf(m.timestamp) }}</time>
             </p>
           </template>
+          <TypingIndicator
+            v-for="[userId, info] in typingUsers"
+            :key="userId"
+            :name="info.name"
+            :is-agent="info.isAgent"
+          />
         </div>
 
         <form class="composer" @submit.prevent="send">
           <label for="draft" class="sr-only">Mensagem</label>
-          <textarea id="draft" v-model="draft" rows="1" maxlength="4000" placeholder="Escreva uma mensagem…" @keydown.enter="onEnter"></textarea>
+          <textarea id="draft" v-model="draft" rows="1" maxlength="4000" placeholder="Escreva uma mensagem…" @keydown.enter="onEnter" @input="onDraftInput"></textarea>
           <button class="send" type="submit" :disabled="!draft.trim() || sending" aria-label="Enviar">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z" /></svg>
           </button>
