@@ -168,10 +168,16 @@ const timeline = computed(() => {
   const conv = store.active;
   if (!conv) return [];
   const list = conv.chat.chatData;
+  // Captura today uma única vez para evitar que dayLabel retorne valores
+  // diferentes dentro do mesmo map (ex: virada de ms entre iterações),
+  // o que causava repetição do chip "Hoje".
+  const today = new Date();
+  let lastDay = "";
   return list.map((m, i) => {
     const prev = list[i - 1];
-    const day = dayLabel(m.timestamp);
-    const newDay = Boolean(day) && day !== dayLabel(prev?.timestamp);
+    const day = dayLabel(m.timestamp, today);
+    const newDay = Boolean(day) && day !== lastDay;
+    if (day) lastDay = day;
     return {
       ...m,
       mine: m.sender === conv.myRole,
