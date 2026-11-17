@@ -521,13 +521,15 @@ svg {
 }
 .conv-list {
   list-style: none;
-  margin: 0 -6px;
+  margin: 0;
   padding: 0 6px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
   display: grid;
   align-content: start;
   gap: 4px;
+  min-width: 0;
 }
 .conv {
   position: relative;
@@ -568,6 +570,11 @@ svg {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+.conv-top strong,
+.conv-last span:first-child {
+  min-width: 0;
 }
 .conv-top strong {
   font-weight: 500;
