@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import NewChatDialog from "@/components/chat/NewChatDialog.vue";
 import TypingIndicator from "@/components/chat/TypingIndicator.vue";
@@ -23,52 +23,77 @@ const showNew = ref(false);
 const scroller = ref<HTMLElement | null>(null);
 const routeId = computed(() => (typeof route.params.id === "string" ? route.params.id : ""));
 
-// Typing indicator state: tracks who is currently typing in the active chat
 const typingUsers = ref<Map<string, { name: string; isAgent: boolean }>>(new Map());
 let typingTimeout: ReturnType<typeof setTimeout> | null = null;
-const CLAUDE_PEDRO_ID = "6afbb43ca5f3b29532e64087";
+let lastTypingEmitAt = 0;
+const TYPING_THROTTLE_MS = 1500;
+const CLAUDE_PEDRO_ID = import.meta.env.VITE_CLAUDE_PEDRO_USER_ID ?? "";
 
 async function scrollToEnd() {
   await nextTick();
   scroller.value?.scrollTo({ top: scroller.value.scrollHeight });
 }
 
-// Typing indicator: listen for remote typing events and emit local ones
+function stopTypingForCurrentChat() {
+  const chatId = routeId.value;
+  if (chatId && typingTimeout) {
+    clearTimeout(typingTimeout);
+    typingTimeout = null;
+    emitTypingStop(chatId);
+  }
+}
+
+function onTypingStart(ev: { chat_id: string; user_id: string }) {
+  if (ev.chat_id !== routeId.value) return;
+  if (ev.user_id === session.userId) return;
+  const conv = store.conversations.find((c) => c.chat._id === ev.chat_id);
+  if (!conv) return;
+  typingUsers.value.set(ev.user_id, {
+    name: conv.other.name,
+    isAgent: CLAUDE_PEDRO_ID !== "" && ev.user_id === CLAUDE_PEDRO_ID,
+  });
+  void scrollToEnd();
+}
+
+function onTypingStop(ev: { chat_id: string; user_id: string }) {
+  if (ev.chat_id !== routeId.value) return;
+  typingUsers.value.delete(ev.user_id);
+}
+
 function setupTypingListeners() {
   const socket = getSocket();
-  socket.on("typing:start", (ev: { chat_id: string; user_id: string }) => {
-    if (ev.chat_id !== routeId.value) return;
-    const conv = store.conversations.find((c) => c.chat._id === ev.chat_id);
-    if (!conv || ev.user_id === session.userId) return;
-    typingUsers.value.set(ev.user_id, {
-      name: conv.other.name,
-      isAgent: ev.user_id === CLAUDE_PEDRO_ID,
-    });
-    void scrollToEnd();
-  });
-  socket.on("typing:stop", (ev: { chat_id: string; user_id: string }) => {
-    if (ev.chat_id !== routeId.value) return;
-    typingUsers.value.delete(ev.user_id);
-  });
+  socket.on("typing:start", onTypingStart);
+  socket.on("typing:stop", onTypingStop);
+}
+
+function teardownTypingListeners() {
+  const socket = getSocket();
+  socket.off("typing:start", onTypingStart);
+  socket.off("typing:stop", onTypingStop);
 }
 
 function onDraftInput() {
   const chatId = routeId.value;
   if (!chatId || !draft.value.trim()) return;
-  emitTypingStart(chatId);
+  const now = Date.now();
+  if (now - lastTypingEmitAt >= TYPING_THROTTLE_MS) {
+    emitTypingStart(chatId);
+    lastTypingEmitAt = now;
+  }
   if (typingTimeout) clearTimeout(typingTimeout);
   typingTimeout = setTimeout(() => {
     emitTypingStop(chatId);
     typingTimeout = null;
+    lastTypingEmitAt = 0;
   }, 2000);
 }
 
-// Clear typing state when switching chats
-watch(routeId, () => {
+watch(routeId, (_newId, oldId) => {
   typingUsers.value.clear();
-  if (typingTimeout) {
+  if (oldId && typingTimeout) {
     clearTimeout(typingTimeout);
     typingTimeout = null;
+    emitTypingStop(oldId);
   }
 });
 
@@ -76,6 +101,11 @@ onMounted(async () => {
   if (!session.me) await session.loadMe().catch(() => null);
   await store.load();
   setupTypingListeners();
+});
+
+onUnmounted(() => {
+  stopTypingForCurrentChat();
+  teardownTypingListeners();
 });
 
 watch(
@@ -98,6 +128,7 @@ watch(() => store.active?.chat.chatData.length, scrollToEnd);
 async function send() {
   const text = draft.value.trim();
   if (!text || sending.value) return;
+  stopTypingForCurrentChat();
   sending.value = true;
   error.value = "";
   try {
